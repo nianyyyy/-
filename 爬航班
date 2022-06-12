@@ -1,0 +1,57 @@
+from bs4 import BeautifulSoup
+import requests
+import xlwt
+
+
+web='https://flights.ctrip.com/schedule'
+hbs = []
+
+def pahangban():       #获取所有的航班
+    head = {
+        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Mobile Safari/537.36 Edg/102.0.1245.30"
+    }
+    response = requests.get(web, headers=head)
+    soup = BeautifulSoup(response.text,'lxml')
+    letter_list = soup.find( attrs={'class':'letter_list'}).find_all('li')
+    for li in letter_list:
+        for a in li.find_all('a'):
+            t= web + a['href'][9:]
+            qishi(t)
+        
+
+            
+
+def qishi(url):          #通过得到的链接获取该地航班的出发-降落点
+    head = {
+        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Mobile Safari/537.36 Edg/102.0.1245.30"
+    }
+    response = requests.get(url, headers=head)
+    soup = BeautifulSoup(response.text,'lxml')
+    if (soup.find( attrs={'id': 'ulD_Domestic'})):
+        letter_list = soup.find( attrs={'id': 'ulD_Domestic'}).find_all('li')
+        for li in letter_list:
+            for a in li.find_all('a'):
+                t = web + a['href'][9:]
+                hb = {}
+                hb[a.get_text()] = t
+                hbs.append(hb)
+        
+
+def savehb():
+    book = xlwt.Workbook(encoding="utf-8")
+    sheet = book.add_sheet('航班信息')
+    col = ("航班出发-降落地","航班链接")
+    for i in range(0,2):
+        sheet.write(0,i,col[i])
+    a=int(0)
+    for i in hbs:
+        data = hbs[a]
+        for key,value in data.items():
+            sheet.write(a+1,0,key)
+            sheet.write(a+1,1,value)
+        a=a+1
+    book.save('hb.xls')
+            
+    
+pahangban()
+#savehb()
